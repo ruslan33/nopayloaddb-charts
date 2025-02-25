@@ -8,7 +8,7 @@ spec:
   lookupPolicy:
     local: true
   tags:
-    - name: {{ .Values.pgbouncer_docker_image_tag }}
+    - name: {{ split ":" .Values.pgbouncer_docker_image }}
       from:
         kind: DockerImage
         name: {{ .Values.pgbouncer_docker_image }}
@@ -35,8 +35,8 @@ data:
     max_client_conn = 10000
     ;;default_pool_size = 20
   userlist.txt: |
-    {{ .Values.dbuser_app }} {{ .Values.dbpassword | quote }}
-    {{ .Values.dbuser_adm }} {{ .Values.dbpassword | quote }}
+    {{ .Values.dbuser_app | quote}} {{ .Values.dbpassword | quote }}
+    {{ .Values.dbuser_adm | quote}} {{ .Values.dbpassword | quote }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -65,7 +65,7 @@ spec:
                 - os-worker03.sdcc.bnl.gov
       containers:
       - name: pgbouncer
-        image: {{ .Values.pgbouncer_docker_image }}
+        image: {{ splitList "/" .Values.pgbouncer_docker_image | rest | join "/" }}
         ports:
         - containerPort: 6432
         volumeMounts:

@@ -14,8 +14,5 @@ dbpassword: password
 #Docker
 java_docker_image: docker_image
 pgbouncer_docker_image: docker_image
-java_docker_image_tag: tag
-pgbouncer_docker_image_tag: tag
-
 #JWT
 jwt_secret: secret
