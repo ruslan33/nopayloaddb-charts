@@ -29,6 +29,10 @@ spec:
       labels:
         app: java
     spec:
+      securityContext:
+        runAsUser: 50001
+        runAsGroup: 50001
+        fsGroup: 50001  # Ensures PVC is accessible for writing
       containers:
       - name: java
         image: {{ .Values.java_docker_image }}
@@ -71,9 +75,9 @@ spec:
         #- name: POSTGRES_PORT
         #  value: "6432"
         - name: B2S_PAYLOAD_SERVER_ROOT_PATH
-          value: "/"
+          value: "/srv"
         volumeMounts:
-        - mountPath: /mnt
+        - mountPath: /srv
           name: payloadfs
         resources:
           requests:
