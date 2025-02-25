@@ -61,7 +61,7 @@ spec:
         - name: B2S_JWT_AUTH
           value: "true"
         - name:  B2S_AUTH_SECRET
-          value: {{ .Values.jwt_secret }}
+          value: {{ .Values.jwt_secret | quote }}
         - name: B2S_SERVICES_PORT
           value: "8080"
         - name: B2S_SWAGGER_HOST_PORT
