@@ -35,8 +35,8 @@ data:
     max_client_conn = 10000
     ;;default_pool_size = 20
   userlist.txt: |
-    {{ .Values.dbuser_app | quote}} {{ .Values.dbpassword | quote }}
-    {{ .Values.dbuser_adm | quote}} {{ .Values.dbpassword | quote }}
+    {{ .Values.dbuser_app | quote }} {{ .Values.dbpassword | quote }}
+    {{ .Values.dbuser_adm | quote }} {{ .Values.dbpassword | quote }}
 ---
 apiVersion: apps/v1
 kind: Deployment

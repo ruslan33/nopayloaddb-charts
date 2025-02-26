@@ -74,6 +74,8 @@ spec:
         #  value: pgbouncer.{{ .Values.project }}.svc.cluster.local
         #- name: POSTGRES_PORT
         #  value: "6432"
+        - name: B2S_PAYLOAD_SERVER
+          value: {{ .Values.appname_files }}.apps.{{ .Values.okdcluster }}
         - name: B2S_PAYLOAD_SERVER_ROOT_PATH
           value: "/srv"
         volumeMounts:

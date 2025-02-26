@@ -23,8 +23,14 @@ data:
         error_log /var/log/nginx/error.log warn;
 
         server {
+            #listen 443 ssl;  # Listening on port 8080
             listen 8080;  # Listening on port 8080
             server_name localhost;
+
+            #ssl_certificate /etc/grid-security/tls.crt;
+            #ssl_certificate_key /etc/grid-security/tls.key;
+            #ssl_protocols TLSv1.2 TLSv1.3;
+            #ssl_ciphers HIGH:!aNULL:!MD5;
 
             location / {
                 root /usr/share/nginx/html;  # Serve files from this directory
@@ -61,10 +67,14 @@ spec:
           emptyDir: {}
         - name: nginx-pid
           emptyDir: {}
+        - name: grid-cert-volume
+          secret:
+            secretName: nginx-grid-cert
       containers:
         - name: nginx
           image: 'nginx:1.23.1'
           ports:
+            #- containerPort: 443
             - containerPort: 8080
               protocol: TCP
           volumeMounts:
@@ -77,6 +87,9 @@ spec:
               mountPath: /var/cache/nginx
             - name: nginx-pid
               mountPath: /var/run
+            - name: grid-cert-volume
+              mountPath: /etc/grid-security
+              readOnly: true
           imagePullPolicy: IfNotPresent
 ---
 kind: Service
@@ -88,7 +101,10 @@ spec:
     app: "nginx-files"
   ports:
     - name: http
+    #- name: https
       protocol: TCP
+      #port: 443
+      #targetPort: 443
       port: 8080
       targetPort: 8080
   type: ClusterIP
@@ -105,6 +121,7 @@ spec:
     kind: Service
     name: nginx-files
   port:
-    targetPort: http
+    targetPort: 8080
+#    targetPort: 443
 #  tls:
-#    termination: edge
+#    termination: passthrough
