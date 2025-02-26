@@ -8,7 +8,7 @@ spec:
   lookupPolicy:
     local: true
   tags:
-    - name: {{ .Values.java_docker_image_tag }}
+    - name: {{ split ":" .Values.java_docker_image }}
       from:
         kind: DockerImage
         name: {{ .Values.java_docker_image }}
@@ -35,7 +35,7 @@ spec:
         fsGroup: 50001  # Ensures PVC is accessible for writing
       containers:
       - name: java
-        image: {{ .Values.java_docker_image }}
+        image: {{ splitList "/" .Values.java_docker_image | rest | join "/" }}
         imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
@@ -61,7 +61,7 @@ spec:
         - name: B2S_JWT_AUTH
           value: "true"
         - name:  B2S_AUTH_SECRET
-          value: {{ .Values.jwt_secret }}
+          value: {{ .Values.jwt_secret | quote }}
         - name: B2S_SERVICES_PORT
           value: "8080"
         - name: B2S_SWAGGER_HOST_PORT
