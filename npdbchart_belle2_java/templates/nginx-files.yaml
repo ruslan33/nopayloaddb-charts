@@ -23,19 +23,22 @@ data:
         error_log /var/log/nginx/error.log warn;
 
         server {
-            #listen 443 ssl;  # Listening on port 8080
-            listen 8080;  # Listening on port 8080
-            server_name localhost;
+            listen 8443 ssl;  # Listening on port 8080
+            #listen 8080;  # Listening on port 8080
+            server_name {{ .Values.appname_files }}.apps.{{ .Values.okdcluster }};
 
-            #ssl_certificate /etc/grid-security/tls.crt;
-            #ssl_certificate_key /etc/grid-security/tls.key;
-            #ssl_protocols TLSv1.2 TLSv1.3;
-            #ssl_ciphers HIGH:!aNULL:!MD5;
+            ssl_certificate /etc/grid-security/tls.crt;
+            ssl_certificate_key /etc/grid-security/tls.key;
+            ssl_protocols TLSv1.2 TLSv1.3;
+            ssl_ciphers HIGH:!aNULL:!MD5;
+            ssl_prefer_server_ciphers on;
+
+            # Enable SSL verification (only if required)
+            #ssl_verify_client on;
+            #ssl_client_certificate /etc/grid-security/wildcard.bundle.sdcc.bnl.gov.pem; # CA Cert
 
             location / {
                 root /usr/share/nginx/html;  # Serve files from this directory
-                #index index.html index.htm;  # Default file to serve if it exists
-                #autoindex off;  # Enables directory listing if index.html is missing
             }
         }
     }
@@ -56,6 +59,9 @@ spec:
       labels:
         app: nginx-files
     spec:
+      securityContext:
+        runAsUser: 101  # Default NGINX user
+        fsGroup: 1000860000  # Match the group of the secret
       volumes:
         - name: files-volume
           persistentVolumeClaim:
@@ -72,10 +78,10 @@ spec:
             secretName: nginx-grid-cert
       containers:
         - name: nginx
-          image: 'nginx:1.23.1'
+          image: ' nginx:1.23.1-perl'
           ports:
-            #- containerPort: 443
-            - containerPort: 8080
+            - containerPort: 8443
+            #- containerPort: 8080
               protocol: TCP
           volumeMounts:
             - name: files-volume
@@ -100,13 +106,13 @@ spec:
   selector:
     app: "nginx-files"
   ports:
-    - name: http
-    #- name: https
+    #- name: http
+    - name: https
       protocol: TCP
-      #port: 443
-      #targetPort: 443
-      port: 8080
-      targetPort: 8080
+      port: 8443
+      targetPort: 8443
+      #port: 8080
+      #targetPort: 8080
   type: ClusterIP
 ---
 kind: Route
@@ -121,7 +127,7 @@ spec:
     kind: Service
     name: nginx-files
   port:
-    targetPort: 8080
-#    targetPort: 443
-#  tls:
-#    termination: passthrough
+#    targetPort: 8080
+    targetPort: 8443
+  tls:
+    termination: passthrough
