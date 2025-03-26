@@ -8,10 +8,14 @@ spec:
   lookupPolicy:
     local: true
   tags:
-    - name: {{ split ":" .Values.java_docker_image }}
+    - name: {{ .Values.java_docker_image | splitList ":" | last | quote }}
       from:
         kind: DockerImage
         name: {{ .Values.java_docker_image }}
+#    - name: {{ split ":" .Values.java_docker_image }}
+#      from:
+#        kind: DockerImage
+#        name: {{ .Values.java_docker_image }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,8 +39,10 @@ spec:
         fsGroup: 50001  # Ensures PVC is accessible for writing
       containers:
       - name: java
-        image: {{ splitList "/" .Values.java_docker_image | rest | join "/" }}
-        imagePullPolicy: "Always"
+        image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/b2s-okd:{{ .Values.java_docker_image | splitList ":" | last }}"
+        imagePullPolicy: "IfNotPresent"
+#        image: {{ splitList "/" .Values.java_docker_image | rest | join "/" }}
+#        imagePullPolicy: "Always"
         ports:
         - containerPort: 8080
           protocol: TCP

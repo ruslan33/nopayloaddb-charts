@@ -19,12 +19,25 @@ data:
                         '$status $body_bytes_sent "$http_referer" '
                         '"$http_user_agent" "$http_x_forwarded_for"';
 
-        access_log /var/log/nginx/access.log main;
-        error_log /var/log/nginx/error.log warn;
-
+        #access_log /var/log/nginx/access.log main;
+        #error_log /var/log/nginx/error.log warn;
+        # Set the access log to STDOUT
+        access_log /dev/stdout;
+        # Set the error log to STDERR
+        error_log /dev/stderr warn;
+        
         server {
-            listen 8443 ssl;  # Listening on port 8080
-            #listen 8080;  # Listening on port 8080
+            listen 8080;
+            server_name {{ .Values.appname_files }}.apps.{{ .Values.okdcluster }};
+           
+            location / {
+                root /usr/share/nginx/html;  # Serve files from this directory
+            }
+        }
+ 
+             
+        server {
+            listen 8443 ssl;  # Listening on port 8443
             server_name {{ .Values.appname_files }}.apps.{{ .Values.okdcluster }};
 
             ssl_certificate /etc/grid-security/tls.crt;
@@ -78,10 +91,14 @@ spec:
             secretName: nginx-grid-cert
       containers:
         - name: nginx
-          image: ' nginx:1.23.1-perl'
+          image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/nginx:{{ .Values.nginx_docker_image | splitList ":" | last }}"
+          imagePullPolicy: IfNotPresent
+#        - name: nginx
+#          image: ' nginx:1.23.1-perl'
           ports:
+            - containerPort: 8080
+              protocol: TCP
             - containerPort: 8443
-            #- containerPort: 8080
               protocol: TCP
           volumeMounts:
             - name: files-volume
@@ -107,19 +124,20 @@ spec:
   selector:
     app: "nginx-files"
   ports:
-    #- name: http
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
     - name: https
       protocol: TCP
-      port: 8443
+      port: 443
       targetPort: 8443
-      #port: 8080
-      #targetPort: 8080
   type: ClusterIP
 ---
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
-  name: nginx-files
+  name: nginx-files-https
   labels:
     app: nginx-files
 spec:
@@ -128,7 +146,11 @@ spec:
     kind: Service
     name: nginx-files
   port:
-#    targetPort: 8080
-    targetPort: 8443
+#    targetPort: https
+#  tls:
+#    termination: passthrough
+#    insecureEdgeTerminationPolicy: Redirect
+    targetPort: http
   tls:
-    termination: passthrough
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow

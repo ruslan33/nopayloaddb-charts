@@ -28,6 +28,21 @@ data:
 
     }
 ---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  lookupPolicy:
+    local: true
+  tags:
+    - name: {{ .Values.nginx_docker_image | splitList ":" | last | quote }}
+      from:
+        kind: DockerImage
+        name: {{ .Values.nginx_docker_image }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -46,9 +61,12 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.14.2
+        image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/nginx:{{ .Values.nginx_docker_image | splitList ":" | last }}"
+        imagePullPolicy: IfNotPresent
+#      - name: nginx
+#        image: nginx:1.14.2
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         volumeMounts:
         - name: nginx-conf
           mountPath: /etc/nginx/conf.d # mount nginx-conf volumn to /etc/nginx/conf.d
@@ -83,7 +101,7 @@ spec:
   ports:
     - name: http
       protocol: TCP
-      port: 8080
+      port: 80
       targetPort: 8080
   type: ClusterIP
 ---
@@ -102,3 +120,4 @@ spec:
     targetPort: http
   tls:
     termination: edge
+    insecureEdgeTerminationPolicy: Allow 
