@@ -8,7 +8,7 @@ spec:
   lookupPolicy:
     local: true
   tags:
-    - name: {{ split ":" .Values.django_docker_image }}
+    - name: {{ .Values.django_docker_image | splitList ":" | last | quote }}
       from:
         kind: DockerImage
         name: {{ .Values.django_docker_image }}
@@ -29,9 +29,11 @@ spec:
       labels:
         app: django
     spec:
+      #securityContext:
+      #  fsGroup: 1000
       containers:
       - name: django
-        image:  {{ .Values.django_docker_image | splitList "/" | last | quote }}
+        image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/npdbhelm:{{ .Values.django_docker_image | splitList ":" | last }}"
         imagePullPolicy: "IfNotPresent"
         ports:
         - containerPort: 8080

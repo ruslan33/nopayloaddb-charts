@@ -8,10 +8,14 @@ spec:
   lookupPolicy:
     local: true
   tags:
-    - name: {{ split ":" .Values.pgbouncer_docker_image }}
+    - name: {{ .Values.pgbouncer_docker_image | splitList ":" | last | quote }}
       from:
         kind: DockerImage
         name: {{ .Values.pgbouncer_docker_image }}
+#    - name: {{ split ":" .Values.pgbouncer_docker_image }}
+#      from:
+#        kind: DockerImage
+#        name: {{ .Values.pgbouncer_docker_image }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -65,7 +69,9 @@ spec:
                 - os-worker03.sdcc.bnl.gov
       containers:
       - name: pgbouncer
-        image: {{ splitList "/" .Values.pgbouncer_docker_image | rest | join "/" }}
+        image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/pgbouncer-helm:{{ .Values.pgbouncer_docker_image | splitList ":" | last }}"
+        imagePullPolicy: "IfNotPresent"
+#        image: {{ splitList "/" .Values.pgbouncer_docker_image | rest | join "/" }}
         ports:
         - containerPort: 6432
         volumeMounts:
