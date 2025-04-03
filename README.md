@@ -13,12 +13,12 @@ You need to copy your configuration values into the appropriate charts.
 
 ### sPHENIX:
 ```bash
-cp /path/to/your/values/values.yaml nopayloaddb-charts/npdbchart_sphenix
+cp /path/to/your/values/values_sphenix.yaml nopayloaddb-charts/npdbchart_sphenix/values.yaml
 ```
 
 ### Belle2 Java:
 ```bash
-cp /path/to/your/values/values.yaml nopayloaddb-charts/npdbchart_belle2_java
+cp /path/to/your/values/values_belle2-java.yaml nopayloaddb-charts/npdbchart_belle2_java/values.yaml
 ```
 
 ## oc and helm commands
