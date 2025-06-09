@@ -32,6 +32,10 @@ data:
            
             location / {
                 root /usr/share/nginx/html;  # Serve files from this directory
+                # REMOVE Cache-Control from backend
+                proxy_hide_header Cache-Control;
+                # Add Cache-Control header to the response
+                add_header Cache-Control {{ .Values.nginx_cache_control_value | quote }};
             }
         }
  
@@ -52,6 +56,10 @@ data:
 
             location / {
                 root /usr/share/nginx/html;  # Serve files from this directory
+                # REMOVE Cache-Control from backend
+                proxy_hide_header Cache-Control;
+                # Add Cache-Control header to the response
+                add_header Cache-Control {{ .Values.nginx_cache_control_value | quote }};
             }
         }
     }
@@ -140,6 +148,8 @@ metadata:
   name: nginx-files-https
   labels:
     app: nginx-files
+  annotations:
+    haproxy.router.openshift.io/disable_cookies: "true"
 spec:
   host: {{ .Values.appname_files }}.apps.{{ .Values.okdcluster }}
   to:
