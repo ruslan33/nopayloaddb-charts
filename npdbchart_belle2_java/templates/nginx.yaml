@@ -19,6 +19,11 @@ data:
             proxy_pass http://java;
             proxy_redirect off;
 
+            # REMOVE Cache-Control from backend
+            proxy_hide_header Cache-Control;
+            # Add Cache-Control header to the response
+            add_header Cache-Control {{ .Values.nginx_cache_control_value }};
+
             proxy_read_timeout 1800;
             proxy_connect_timeout 1800;
             proxy_send_timeout 1800;
@@ -111,6 +116,8 @@ metadata:
   name: nginx
   labels:
     app: nginx
+  annotations:
+    haproxy.router.openshift.io/disable_cookies: "true"
 spec:
   host: {{ .Values.appname }}.apps.{{ .Values.okdcluster }}
   to:

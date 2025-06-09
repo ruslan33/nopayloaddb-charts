@@ -81,7 +81,7 @@ spec:
         #- name: POSTGRES_PORT
         #  value: "6432"
         - name: B2S_PAYLOAD_SERVER
-          value: {{ .Values.appname_files }}.apps.{{ .Values.okdcluster }}
+          value: {{ .Values.payload_server_alias }}
         - name: B2S_PAYLOAD_SERVER_SECURE
           value: "true"
         - name: B2S_PAYLOAD_SERVER_ROOT_PATH
