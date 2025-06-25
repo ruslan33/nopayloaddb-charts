@@ -74,6 +74,10 @@ spec:
           value: "8081" 
         - name: B2S_QUERY_CACHE_MAX_SIZE
           value: "100"
+        - name: B2S_INITIAL_MEM
+          value: "1024"
+        - name: B2S_MAX_MEM
+          value: "5120"
         #- name: POSTGRES_PASSWORD
         #  value: {{ .Values.dbpassword }}
         #- name: POSTGRES_HOST
