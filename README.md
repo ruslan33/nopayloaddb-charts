@@ -45,15 +45,6 @@ helm list
 helm upgrade <helm-release-name> /path/to/your/helm-charts/nopayloaddb-charts/npdbchart_YOUR_EXPERIMENT
 ```
 
-### Uninstall a helm release
-```bash
-helm uninstall RELEASE
-```
-### Install a helm release
-```bash
-helm install <helm-release-name> /path/to/your/helm-charts/nopayloaddb-charts/npdbchart_YOUR_EXPERIMENT
-```
-
 ### Get pods
 ```bash
 oc get pods
