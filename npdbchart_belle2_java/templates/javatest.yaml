@@ -1,37 +1,19 @@
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  name: b2s-okd
-  labels:
-    app: java
-spec:
-  lookupPolicy:
-    local: true
-  tags:
-    - name: {{ .Values.java_docker_image | splitList ":" | last | quote }}
-      from:
-        kind: DockerImage
-        name: {{ .Values.java_docker_image }}
-#    - name: {{ split ":" .Values.java_docker_image }}
-#      from:
-#        kind: DockerImage
-#        name: {{ .Values.java_docker_image }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: java
+  name: javatest
   labels:
-    app: java
+    app: javatest
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
-      app: java
+      app: javatest
   template:
     metadata:
       labels:
-        app: java
+        app: javatest
     spec:
       affinity:
         nodeAffinity:
@@ -39,10 +21,50 @@ spec:
             nodeSelectorTerms:
             - matchExpressions:
               - key: kubernetes.io/hostname
-                operator: NotIn
+                operator: In
                 values:
                 #- os-worker00.sdcc.bnl.gov
-                - os-worker01.sdcc.bnl.gov
+                #- os-worker01.sdcc.bnl.gov
+                #- os-worker02.sdcc.bnl.gov
+                #- os-worker03.sdcc.bnl.gov
+                #- os-worker04.sdcc.bnl.gov
+                #- os-worker05.sdcc.bnl.gov
+                #- os-worker06.sdcc.bnl.gov
+                #- os-worker07.sdcc.bnl.gov
+                - os-worker08.sdcc.bnl.gov
+                #- os-worker09.sdcc.bnl.gov
+                #- os-worker10.sdcc.bnl.gov
+                #- os-worker11.sdcc.bnl.gov
+      securityContext:
+        runAsUser: 50001
+        runAsGroup: 50001
+        fsGroup: 50001  # Ensures PVC is accessible for writing---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javatest
+  labels:
+    app: javatest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: javatest
+  template:
+    metadata:
+      labels:
+        app: javatest
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                #- os-worker00.sdcc.bnl.gov
+                #- os-worker01.sdcc.bnl.gov
                 #- os-worker02.sdcc.bnl.gov
                 #- os-worker03.sdcc.bnl.gov
                 #- os-worker04.sdcc.bnl.gov
@@ -58,7 +80,7 @@ spec:
         runAsGroup: 50001
         fsGroup: 50001  # Ensures PVC is accessible for writing
       containers:
-      - name: java
+      - name: javatest
         image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/b2s-okd:{{ .Values.java_docker_image | splitList ":" | last }}"
         imagePullPolicy: "IfNotPresent"
 #        image: {{ splitList "/" .Values.java_docker_image | rest | join "/" }}
@@ -79,9 +101,12 @@ spec:
         env:
         - name: PGSERVER
           #value: pgbouncer.{{ .Values.project }}.svc.cluster.local
+          #value: 10.130.3.193
+          #value: 10.130.3.195
+          #value: pgbouncer-5b745c557d-zlx6p
           #value: blcdbtest-db01.sdcc.bnl.gov
           #value: postgresql.test-cdb.svc.cluster.local
-          value: {{ .Values.dbhost }}
+          value: blconddb03.sdcc.bnl.gov
         - name: PGPORT
           #value: "6432"
           value: "5432"
@@ -133,17 +158,3 @@ spec:
         - name: payloadfs
           persistentVolumeClaim:
             claimName: {{ .Values.pvc_payload_server}}
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: "java"
-spec:
-  selector:
-    app: "java"
-  ports:
-    - name: "tcp-8080"
-      protocol: TCP
-      port: 8080
-      targetPort: 8080
-  type: ClusterIP

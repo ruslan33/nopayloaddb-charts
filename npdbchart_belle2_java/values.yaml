@@ -10,6 +10,7 @@ pvc_payload_server: pvc_name
 subPath: dir1/dir2
 #DB parameters
 dbhost: hostname
+dbreplicahost: hostname
 dbname: dbname
 dbuser_app: username
 dbuser_adm: username
