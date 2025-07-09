@@ -25,6 +25,8 @@ data:
         access_log /dev/stdout;
         # Set the error log to STDERR
         error_log /dev/stderr warn;
+
+        client_max_body_size 100M;
         
         server {
             listen 8080;

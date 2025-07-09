@@ -1,37 +1,18 @@
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  name: b2s-okd
-  labels:
-    app: java
-spec:
-  lookupPolicy:
-    local: true
-  tags:
-    - name: {{ .Values.java_docker_image | splitList ":" | last | quote }}
-      from:
-        kind: DockerImage
-        name: {{ .Values.java_docker_image }}
-#    - name: {{ split ":" .Values.java_docker_image }}
-#      from:
-#        kind: DockerImage
-#        name: {{ .Values.java_docker_image }}
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: java
+  name: java-replica
   labels:
-    app: java
+    app: java-replica
 spec:
-  replicas: 5
+  replicas: 2
   selector:
     matchLabels:
-      app: java
+      app: java-replica
   template:
     metadata:
       labels:
-        app: java
+        app: java-replica
     spec:
       affinity:
         nodeAffinity:
@@ -58,7 +39,7 @@ spec:
         runAsGroup: 50001
         fsGroup: 50001  # Ensures PVC is accessible for writing
       containers:
-      - name: java
+      - name: java-replica
         image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/b2s-okd:{{ .Values.java_docker_image | splitList ":" | last }}"
         imagePullPolicy: "IfNotPresent"
 #        image: {{ splitList "/" .Values.java_docker_image | rest | join "/" }}
@@ -81,7 +62,7 @@ spec:
           #value: pgbouncer.{{ .Values.project }}.svc.cluster.local
           #value: blcdbtest-db01.sdcc.bnl.gov
           #value: postgresql.test-cdb.svc.cluster.local
-          value: {{ .Values.dbhost }}
+          value: {{ .Values.dbreplicahost }}
         - name: PGPORT
           #value: "6432"
           value: "5432"
@@ -137,10 +118,10 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: "java"
+  name: "java-replica"
 spec:
   selector:
-    app: "java"
+    app: "java-replica"
   ports:
     - name: "tcp-8080"
       protocol: TCP
