@@ -53,7 +53,7 @@ metadata:
   labels:
     app: pgbouncer
 spec:
-  replicas: 8
+  replicas: 0
   selector:
     matchLabels:
       app: pgbouncer
