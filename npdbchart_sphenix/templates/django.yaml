@@ -67,7 +67,7 @@ spec:
             path: /api/cdb_rest/globalTags
             port: 8000
           initialDelaySeconds: 60
-          periodSeconds: 120      # every 15 minutes
+          periodSeconds: 1200      # every 20 minutes
           failureThreshold: 1     # restart pod after 1 failure
           timeoutSeconds: 30
         env:
