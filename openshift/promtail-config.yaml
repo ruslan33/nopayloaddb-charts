@@ -1,0 +1,26 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: promtail-config
+  namespace: <project>
+data:
+  promtail-config.yaml: |
+    server:
+      http_listen_port: 9080
+      grpc_listen_port: 0
+
+    positions:
+      filename: /tmp/positions.yaml
+
+    clients:
+      - url: http://loki.<project>.svc.cluster.local:3100/loki/api/v1/push
+        tenant_id: default
+
+    scrape_configs:
+      - job_name: django-logs
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: django
+              __path__: /var/log/gunicorn.log
