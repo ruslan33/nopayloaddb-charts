@@ -8,11 +8,8 @@ data:
         server django.{{ .Values.project }}.svc.cluster.local:8000 max_conns=2000;
     }
 
-    #error_log {{ .Values.nginx_logpath }}/placeholder.error.log debug;
-    #access_log {{ .Values.nginx_logpath }}/placeholder.access.log;
-    # Log to console
-    error_log /dev/stderr debug;
-    access_log /dev/stdout;
+    error_log {{ .Values.nginx_logpath }}/placeholder.error.log debug;
+    access_log {{ .Values.nginx_logpath }}/placeholder.access.log;
 
     proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=my_cache:10m max_size=200m inactive=1h use_temp_path=off;
 
@@ -108,6 +105,15 @@ spec:
           exec:
             command: ["/bin/bash","-c","mkdir -p {{ .Values.nginx_logpath }} && chmod 777 {{ .Values.nginx_logpath }} && cp /media/nginx.conf /etc/nginx/conf.d/ && sed -i \"s/placeholder/$HOSTNAME/g\" /etc/nginx/conf.d/nginx.conf && nginx -s reload "]
 
+      - name: promtail
+        image: grafana/promtail:2.9.0
+        args:
+          - "-config.file=/etc/promtail/promtail-config.yaml"
+        volumeMounts:
+          - name: log
+            mountPath: {{ .Values.nginx_logpath }}
+          - name: promtail-config
+            mountPath: /etc/promtail
 
       volumes:
       - name: nginx-conf
@@ -127,6 +133,9 @@ spec:
       - name: persistantfs
         persistentVolumeClaim:
           claimName: {{ .Values.pvcname }}
+      - name: promtail-config
+        configMap:
+          name: promtail-config
 ---
 kind: Service
 apiVersion: v1
