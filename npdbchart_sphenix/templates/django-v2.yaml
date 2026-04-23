@@ -100,12 +100,12 @@ spec:
           mountPath: /var/run
         - name: varlog
           mountPath: /var/log
-        readinessProbe:
-          initialDelaySeconds: 1
-          periodSeconds: 5
-          timeoutSeconds: 1
-          successThreshold: 1
-          failureThreshold: 1
+        #readinessProbe:
+          #initialDelaySeconds: 1
+          #periodSeconds: 5
+          #timeoutSeconds: 1
+          #successThreshold: 1
+          #failureThreshold: 1
           #exec:
           #  command: ["/bin/bash","-c","mkdir -p {{ .Values.django_logpath }} && chmod 777 {{ .Values.django_logpath }}"]
       - name: promtail
