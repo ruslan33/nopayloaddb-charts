@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "npdbchart.fullname" . }}-pgbouncer-conf
+  labels:
+    {{- include "npdbchart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pgbouncer
+data:
+  pgbouncer.ini: |
+    [databases]
+    pgbouncer =
+    {{ .Values.dbname_w }} = host={{ .Values.dbhost_w }} port=5432 dbname={{ .Values.dbname_w }}
+    [pgbouncer]
+    admin_users = {{ .Values.dbuser_w }}
+    ignore_startup_parameters = extra_float_digits
+    listen_addr = *
+    listen_port = 6432
+    logfile = /var/log/pgbouncer/pgbouncer.log
+    pidfile = /var/run/pgbouncer/pgbouncer.pid
+    auth_type = scram-sha-256
+    auth_file = /etc/pgbouncer/userlist.txt
+    unix_socket_dir = /var/run/pgbouncer
+    pool_mode = transaction
+    max_client_conn = 10000
+    default_pool_size = 1100
+    reserve_pool_size = 400
+    reserve_pool_timeout = 5
+  userlist.txt: |
+    {{ .Values.dbuser_w | quote }} {{ .Values.dbpassword_w | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "npdbchart.fullname" . }}-pgbouncer
+  labels:
+    {{- include "npdbchart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pgbouncer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "npdbchart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: pgbouncer
+  template:
+    metadata:
+      labels:
+        {{- include "npdbchart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: pgbouncer
+    spec:
+      containers:
+      - name: pgbouncer
+        image: {{ .Values.pgbouncer_docker_image }}
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 6432
+        volumeMounts:
+        - name: pgbouncer-conf
+          mountPath: /etc/pgbouncer
+          readOnly: true
+      volumes:
+      - name: pgbouncer-conf
+        configMap:
+          name: {{ include "npdbchart.fullname" . }}-pgbouncer-conf
+          items:
+           - key: pgbouncer.ini
+             path: pgbouncer.ini
+           - key: userlist.txt
+             path: userlist.txt
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ include "npdbchart.fullname" . }}-pgbouncer
+  labels:
+    {{- include "npdbchart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pgbouncer
+spec:
+  selector:
+    {{- include "npdbchart.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: pgbouncer
+  ports:
+    - name: "6432-tcp"
+      protocol: TCP
+      port: 6432
+      targetPort: 6432
+  type: ClusterIP
+  sessionAffinity: None
