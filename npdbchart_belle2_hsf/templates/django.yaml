@@ -45,6 +45,18 @@ spec:
                 values:
                 - {{ .Values.exclude_node }}
       {{- end }}
+      {{- if .Values.migrations_enabled }}
+      # Hack: the image's migrations dir is root-owned and read-only for the
+      # random OpenShift UID, so makemigrations can't write there. Shadow it
+      # with a writable emptyDir pre-populated from the image.
+      initContainers:
+      - name: copy-migrations
+        image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/{{ include "npdbchart.fullname" . }}-django:{{ .Values.django_docker_image | splitList ":" | last }}"
+        command: ["sh", "-c", "cp -r /nopayloaddb/cdb_rest/migrations/. /migrations-rw/"]
+        volumeMounts:
+        - name: migrations-rw
+          mountPath: /migrations-rw
+      {{- end }}
       containers:
       - name: django
         image: "image-registry.openshift-image-registry.svc:5000/{{ .Values.project }}/{{ include "npdbchart.fullname" . }}-django:{{ .Values.django_docker_image | splitList ":" | last }}"
@@ -111,6 +123,10 @@ spec:
           mountPath: /var/run
         - name: varlog
           mountPath: /var/log
+        {{- if .Values.migrations_enabled }}
+        - name: migrations-rw
+          mountPath: /nopayloaddb/cdb_rest/migrations
+        {{- end }}
       {{- if .Values.promtail_enabled }}
       - name: promtail
         image: grafana/promtail:2.9.0
@@ -127,6 +143,10 @@ spec:
           emptyDir: {}
         - name: varlog
           emptyDir: {}
+        {{- if .Values.migrations_enabled }}
+        - name: migrations-rw
+          emptyDir: {}
+        {{- end }}
         {{- if .Values.promtail_enabled }}
         - name: promtail-config
           configMap:
