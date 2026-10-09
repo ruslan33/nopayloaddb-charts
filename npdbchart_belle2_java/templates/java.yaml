@@ -107,7 +107,7 @@ spec:
         - name: B2S_INITIAL_MEM
           value: "2048"
         - name: B2S_MAX_MEM
-          value: "5096"
+          value: "8192"
         #- name: POSTGRES_PASSWORD
         #  value: {{ .Values.dbpassword }}
         #- name: POSTGRES_HOST
