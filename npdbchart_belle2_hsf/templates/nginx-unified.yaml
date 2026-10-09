@@ -85,9 +85,49 @@ data:
                 root /usr/share/nginx/html;
                 proxy_hide_header Cache-Control;
                 add_header Cache-Control {{ .Values.nginx_cache_control_value | quote }};
-                limit_except GET HEAD {
+                limit_except GET HEAD PUT {
                     deny all;
                 }
+                # Uploads must be authorized by the CDB API before nginx
+                # writes the file; reads stay unauthenticated.
+                if ($request_method = PUT) {
+                    rewrite ^ /_dbstore_put$uri last;
+                }
+            }
+
+            # Upload handler: PUT /dbstore/... requests land here via the
+            # rewrite above (not reachable from outside). The file is written
+            # by the WebDAV module only after auth_request approves the
+            # request; nginx answers 201/204 on success.
+            location /_dbstore_put/dbstore/ {
+                internal;
+                auth_request /_cdb_auth_decision;
+                # Strip the /_dbstore_put prefix so the file is stored under
+                # the same path it is later served from.
+                rewrite ^/_dbstore_put(/.*)$ $1 break;
+                root /usr/share/nginx/html;
+                dav_methods PUT;
+                # Create missing intermediate directories on upload.
+                create_full_put_path on;
+                dav_access group:rw all:r;
+            }
+
+            # Authorization subrequest for uploads: asks the CDB API whether
+            # this request may proceed. The API returns 200 to allow; on PUT
+            # it validates the client's JWT (Authorization header, forwarded
+            # automatically) and the permission plugin, answering 401/403 to
+            # deny — nginx then rejects the upload with that status.
+            location = /_cdb_auth_decision {
+                internal;
+                # Auth decisions must never be served from the proxy cache.
+                proxy_cache off;
+                proxy_pass http://django/api/cdb_rest/auth/decision;
+                # The decision needs headers only, not the uploaded file body.
+                proxy_pass_request_body off;
+                proxy_set_header Content-Length "";
+                # The API bases its decision on the original method and URI.
+                proxy_set_header X-Original-Method $request_method;
+                proxy_set_header X-Original-URI $request_uri;
             }
 
             location / {
@@ -105,9 +145,49 @@ data:
                 root /usr/share/nginx/html;
                 proxy_hide_header Cache-Control;
                 add_header Cache-Control {{ .Values.nginx_cache_control_value | quote }};
-                limit_except GET HEAD {
+                limit_except GET HEAD PUT {
                     deny all;
                 }
+                # Uploads must be authorized by the CDB API before nginx
+                # writes the file; reads stay unauthenticated.
+                if ($request_method = PUT) {
+                    rewrite ^ /_dbstore_put$uri last;
+                }
+            }
+
+            # Upload handler: PUT /dbstore/... requests land here via the
+            # rewrite above (not reachable from outside). The file is written
+            # by the WebDAV module only after auth_request approves the
+            # request; nginx answers 201/204 on success.
+            location /_dbstore_put/dbstore/ {
+                internal;
+                auth_request /_cdb_auth_decision;
+                # Strip the /_dbstore_put prefix so the file is stored under
+                # the same path it is later served from.
+                rewrite ^/_dbstore_put(/.*)$ $1 break;
+                root /usr/share/nginx/html;
+                dav_methods PUT;
+                # Create missing intermediate directories on upload.
+                create_full_put_path on;
+                dav_access group:rw all:r;
+            }
+
+            # Authorization subrequest for uploads: asks the CDB API whether
+            # this request may proceed. The API returns 200 to allow; on PUT
+            # it validates the client's JWT (Authorization header, forwarded
+            # automatically) and the permission plugin, answering 401/403 to
+            # deny — nginx then rejects the upload with that status.
+            location = /_cdb_auth_decision {
+                internal;
+                # Auth decisions must never be served from the proxy cache.
+                proxy_cache off;
+                proxy_pass http://django/api/cdb_rest/auth/decision;
+                # The decision needs headers only, not the uploaded file body.
+                proxy_pass_request_body off;
+                proxy_set_header Content-Length "";
+                # The API bases its decision on the original method and URI.
+                proxy_set_header X-Original-Method $request_method;
+                proxy_set_header X-Original-URI $request_uri;
             }
         }
     }
